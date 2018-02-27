@@ -1,66 +1,62 @@
 "use strict";
 const Alexa = require('alexa-sdk');
-const rp = require('request-promise');
+const request = require('request');
 
-// Lambda関数のメイン処理
+var EKISPERT_KEY = process.env.EKISPERT_KEY;
+var EKISPERT_URL = "https://api.ekispert.jp/v1/json/station/info";
+var DATA = {
+  "とうきょうえき": "22828",
+  "しんじゅくえき": "22741",
+  "こうえんじえき": "22671"
+}
+
 exports.handler = function(event, context, callback) {
-  var alexa = Alexa.handler(event, context); // Alexa SDKのインスタンス生成
+  var alexa = Alexa.handler(event, context);
   //alexa.appId = process.env.APP_ID;
-
-  console.log("bb");
+  var stationCode = "22828";
+  if(event.request.intent) {
+    stationCode = DATA[event.request.intent.slots.StarSign.value];
+  }
   var options = {
-    uri: 'https://api.ekispert.jp/v1/json/dataversion',
+    uri: EKISPERT_URL,
     qs: {
-      key: 'wC4SR9ETBhBcJ3Bv'
+      key: EKISPERT_KEY,
+      code: stationCode,
+      type: 'rail'
     },
     json: true
   };
-
-  rp(options)
-    .then(function (body) {
-      console.log('User has %d body', body.length);
-      console.log(body);
+  request.get(options, function(error, response, body) {
+    if(error) {
+      console.log("error");
+    } else {
+      console.log("success");
       console.log(body.ResultSet.engineVersion);
-    })
-    .catch(function (err) {
-      // API call failed...
-    });
-  console.log("aaa");
-  alexa.registerHandlers(handlers); // ハンドラの登録
-  alexa.execute();                  // インスタンスの実行
-};
+      var handlers = {
+        'LaunchRequest': function () {
+          this.emit('AMAZON.HelpIntent');
+        },
+        'AMAZON.HelpIntent': function () {
+          this.emit(':tell', '駅の乗り入れ路線を検索します');
+        },
+        'HoroscopeIntent': function () {
+          var sign = this.event.request.intent.slots.StarSign.value;
+          var railNameList = [];
+          var message = "";
+          for(var i = 0; i < body.ResultSet.Information.Line.length; i++) {
+            if(body.ResultSet.Information.Line[i].Type == "train") {
+              railNameList.push(body.ResultSet.Information.Line[i].Name);
+            }
+          }
+          message = sign + 'の乗り入れ路線は' + railNameList.length + '本あります。' + railNameList.join(" ") + "です";
 
-var handlers = {
-  // インテントに紐付かないリクエスト
-  'LaunchRequest': function () {
-    this.emit('AMAZON.HelpIntent'); // AMAZON.HelpIntentの呼び出し
-  },
-  // スキルの使い方を尋ねるインテント
-  'AMAZON.HelpIntent': function () {
-    this.emit(':tell', '駅の乗り入れ路線を検索します');
-  },
-  // 対話モデルで定義した、占いを実行するインテント
-  'HoroscopeIntent': function () {
-    var options = {
-      uri: 'https://api.ekispert.jp/v1/json/dataversion',
-      qs: {
-        key: 'wC4SR9ETBhBcJ3Bv'
-      },
-      json: true
-    };
+          console.log(message);
+          this.emit(':tell', message);
+        }
+      };
+      alexa.registerHandlers(handlers);
+      alexa.execute();
+    }
+  })
 
-    rp(options)
-      .then(function (body) {
-        console.log('User has %d body', body.length);
-        console.log(body);
-        console.log(body.ResultSet.engineVersion);
-      })
-      .catch(function (err) {
-        // API call failed...
-      });
-    var sign = this.event.request.intent.slots.StarSign.value;
-    var message = sign + 'の乗り入れ路線は10本あります';
-    console.log(message);
-    this.emit(':tell', message); // レスポンスの生成
-  }
 };
