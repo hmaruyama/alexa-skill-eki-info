@@ -1,0 +1,23 @@
+{
+  "name": "alexa-skill-eki-info",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hmaruyama/alexa-skill-eki-info.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hmaruyama/alexa-skill-eki-info/issues"
+  },
+  "homepage": "https://github.com/hmaruyama/alexa-skill-eki-info#readme",
+  "dependencies": {
+    "alexa-sdk": "^1.0.25",
+    "request": "^2.83.0"
+  }
+}
