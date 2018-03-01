@@ -3,13 +3,8 @@ const Alexa = require('alexa-sdk');
 const request = require('request');
 
 var EKISPERT_KEY = process.env.EKISPERT_KEY;
-var EKISPERT_URL = "https://api.ekispert.jp/v1/json/station/info";
-var EKISPERT_URL2 = "https://api.ekispert.jp/v1/json/station";
-var DATA = {
-  "とうきょうえき": "22828",
-  "しんじゅくえき": "22741",
-  "こうえんじえき": "22671"
-}
+var EKISPERT_URL = "https://api.ekispert.jp/v1/json/";
+
 
 exports.handler = function(event, context, callback) {
 
@@ -17,14 +12,13 @@ exports.handler = function(event, context, callback) {
 
   var alexa = Alexa.handler(event, context);
 
-  var stationName = event.request.intent.slots.StarSign.value;
-　console.log(stationName);
+  var callStationName = event.request.intent.slots.StarSign.value;
 
   var options = {
-    uri: EKISPERT_URL2,
+    uri: EKISPERT_URL + "/station",
     qs: {
       key: EKISPERT_KEY,
-      name: stationName
+      name: callStationName
     },
     json: true
    };
@@ -35,10 +29,10 @@ exports.handler = function(event, context, callback) {
      } else {
        console.log("success");
        console.log(JSON.stringify(body));
-       console.log(body.ResultSet.engineVersion);
        var stationCode = body.ResultSet.Point[0].Station.code;
+       var stationName = body.ResultSet.Point[0].Station.Name;
        var options = {
-         uri: EKISPERT_URL,
+         uri: EKISPERT_URL + "/station/info",
          qs: {
            key: EKISPERT_KEY,
            code: stationCode,
@@ -51,7 +45,6 @@ exports.handler = function(event, context, callback) {
            console.log("error");
          } else {
            console.log("success");
-           console.log(body.ResultSet.engineVersion);
            var handlers = {
              'LaunchRequest': function () {
                this.emit('AMAZON.HelpIntent');
@@ -60,7 +53,6 @@ exports.handler = function(event, context, callback) {
                this.emit(':tell', '駅の乗り入れ路線を検索します');
              },
              'HoroscopeIntent': function () {
-               var sign = this.event.request.intent.slots.StarSign.value;
                var railNameList = [];
                var message = "";
                for(var i = 0; i < body.ResultSet.Information.Line.length; i++) {
@@ -68,9 +60,8 @@ exports.handler = function(event, context, callback) {
                    railNameList.push(body.ResultSet.Information.Line[i].Name);
                  }
                }
-               message = sign + 'の乗り入れ路線は' + railNameList.length + '本あります。' + railNameList.join(" ") + "です";
+               message = stationName + 'の乗り入れ路線は' + railNameList.length + '本あります。' + railNameList.join(" ") + "です";
 
-               console.log(message);
                this.emit(':tell', message);
              }
            };
