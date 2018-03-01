@@ -12,7 +12,7 @@ exports.handler = function(event, context, callback) {
 
   var alexa = Alexa.handler(event, context);
 
-  var callStationName = event.request.intent.slots.StarSign.value;
+  var callStationName = event.request.intent.slots.StationName.value;
 
   var options = {
     uri: EKISPERT_URL + "/station",
